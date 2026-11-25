@@ -24,6 +24,7 @@
     .auth-button{border:1px solid var(--line);background:#fff;border-radius:9px;color:#3c443b;padding:9px 12px;font-size:11px;font-weight:600;white-space:nowrap}.auth-button:hover{border-color:#b7c3b2;background:#fbfcfa}.auth-button:disabled{opacity:.55;cursor:wait}.profile strong,.profile small{max-width:155px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .schedule-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(300px,.9fr);gap:18px;margin-top:19px}.events-panel,.ai-panel{padding:20px}.events-list{display:grid}.event-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;padding:13px 2px;border-bottom:1px solid #f0f1ed}.event-item:last-child{border-bottom:0}.event-title{font-size:12px;font-weight:700}.event-meta{font-size:10px;color:#858b82;margin-top:5px;line-height:1.6}.event-actions{display:flex;align-items:center;gap:6px}.event-actions button{border:1px solid var(--line);background:#fff;color:#687065;border-radius:7px;padding:6px 8px;font-size:10px}.event-actions button:hover{background:#f6f7f3}.event-category{display:inline-block;padding:3px 7px;border-radius:99px;background:#edf2e9;color:#496448;margin-right:6px}.events-empty{padding:25px 10px;text-align:center;color:#92988f;font-size:11px}.ai-head{align-items:flex-start}.ai-status{font-size:10px;color:#92988f;line-height:1.6}.ai-prompts{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0}.ai-prompts button{border:1px solid var(--line);border-radius:99px;background:#fff;color:#687065;padding:7px 10px;font-size:10px}.ai-prompts button:hover{border-color:#b7c3b2;color:var(--green)}.ai-messages{display:grid;align-content:start;gap:10px;height:270px;overflow:auto;border:1px solid #edf0e9;background:#fbfcfa;border-radius:11px;padding:12px}.ai-message{max-width:92%;padding:10px 12px;border-radius:11px;font-size:11px;line-height:1.65;white-space:pre-wrap;overflow-wrap:anywhere}.ai-message.assistant{background:#eef2e8;color:#303a30;justify-self:start}.ai-message.user{background:var(--green);color:#fff;justify-self:end}.ai-message.pending{opacity:.65}.ai-form{display:flex;gap:8px;margin-top:10px}.ai-form input{min-width:0;flex:1;border:1px solid var(--line);border-radius:9px;padding:10px 12px;font-size:11px}.ai-form button{padding:9px 13px}.ai-hint{font-size:9px;line-height:1.5;color:#9a9f97;margin-top:8px}.event-modal{max-height:calc(100vh - 40px);overflow:auto}.all-day-row{display:flex;align-items:center;gap:8px;font-size:11px;color:#687065;margin:0 0 14px}.all-day-row input{accent-color:var(--green)}
     @media(max-width:900px){.schedule-grid{grid-template-columns:1fr}}@media(max-width:450px){.events-panel,.ai-panel{padding:16px}.event-item{grid-template-columns:1fr}.event-actions{justify-content:flex-end}.ai-messages{height:240px}}
+    .week-help{font-size:9px;color:#92988f;margin-top:5px}.week-date-button{display:block;width:100%;padding:0 0 3px;border:0;border-radius:9px;background:transparent;color:inherit;cursor:pointer}.week-date-button:hover .week-date{background:#edf2e9}.week-date-button.selected .week-date{box-shadow:0 0 0 2px #b9c8af}.week-date-button:focus-visible{outline:2px solid var(--green);outline-offset:2px}.week-task-list{margin-top:9px;padding-top:11px;border-top:1px solid #edf0e9;min-height:67px}.week-task-heading{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;color:#687065;font-size:10px}.week-task-heading strong{font-size:10px;font-weight:700}.week-task-heading span{color:#92988f}.week-task-row{display:flex;align-items:center;gap:7px;padding:7px 8px;border-radius:8px;background:#f7f8f5;margin-top:5px}.week-task-mark{color:#849858;font-size:12px;line-height:1}.week-task-name{min-width:0;flex:1;color:#454d43;font-size:10px;line-height:1.4;overflow-wrap:anywhere}.week-task-row.completed .week-task-name{color:#979d94;text-decoration:line-through}.week-task-status{color:#92988f;font-size:9px}.week-task-empty{padding:6px 0;color:#92988f;font-size:10px}
   </style>
 </head>
 <body>
@@ -56,7 +57,7 @@
       </section>
       <aside class="right-column">
         <section class="recommend"><div class="recommend-top"><h3>✦ 優先推薦</h3><span class="spark">✧</span></div><p>根據重要程度與截止日期，建議你先從這件事開始。</p><div id="recommendTask"></div><div class="rec-foot">你仍可以自由調整星等與任務順序。</div></section>
-        <section class="panel week-panel"><div class="week-head"><h3>本週安排</h3><button aria-label="切換週">···</button></div><div class="week-grid" id="weekGrid"></div></section>
+        <section class="panel week-panel" aria-labelledby="weekTitle"><div class="week-head"><div><h3 id="weekTitle">本週安排</h3><div class="week-help">點選日期查看當天任務</div></div></div><div class="week-grid" id="weekGrid"></div><div class="week-task-list" id="weekTaskList" aria-live="polite"></div></section>
         <section class="quote"><div class="quote-mark">“</div><p>不必一次走很遠，只要記得持續向前。</p><small>給今天的你</small></section>
       </aside>
     </div>
@@ -127,7 +128,7 @@ import { getAI, getGenerativeModel, GoogleAIBackend } from 'https://www.gstatic.
     }
     auth=getAuth(firebaseApp);db=getFirestore(firebaseApp);
   }
-  let view='today', editId=null, rating=3, draggingId=null, toastTimer;
+  let view='today', editId=null, rating=3, draggingId=null, toastTimer, selectedWeekDate=iso(today);
   const $=id=>document.getElementById(id);
   const fmtDate=d=>{if(!d)return '未設定截止日';const [y,m,day]=d.split('-').map(Number);return `${m}月${day}日`};
   const dateObj=s=>{if(!s)return null;const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)};
@@ -217,7 +218,23 @@ import { getAI, getGenerativeModel, GoogleAIBackend } from 'https://www.gstatic.
     $('recommendTask').innerHTML=(()=>{const t=recommendedSort(todayTasks)[0];return t?`<div class="rec-task"><div class="rec-num">01</div><div><div class="rec-name">${escapeHtml(t.title)}</div><div class="rec-meta">${'★'.repeat(t.stars)}${'☆'.repeat(5-t.stars)}　${t.duration?escapeHtml(t.duration)+'　·　':''}今天到期</div></div></div>`:`<div class="rec-task"><div class="rec-num">✓</div><div><div class="rec-name">今天的安排已就緒</div><div class="rec-meta">新增一項任務，開始累積進度。</div></div></div>`})();
     renderWeek();bindTaskEvents();
   }
-  function renderWeek(){const names=['一','二','三','四','五','六','日'];const mon=new Date(today);mon.setDate(today.getDate()-((today.getDay()+6)%7));$('weekGrid').innerHTML=names.map((n,i)=>{const d=new Date(mon);d.setDate(mon.getDate()+i);const key=iso(d),ts=tasks.filter(t=>t.due===key&&!t.done).length;return `<div class="week-date-wrap"><div class="week-day">${n}</div><div class="week-date ${key===iso(today)?'today':''}">${d.getDate()}</div><div class="week-dots">${Array.from({length:Math.min(ts,3)},()=>'<i></i>').join('')}</div></div>`}).join('')}
+  function renderWeek(){
+    const names=['一','二','三','四','五','六','日'];const mon=new Date(today);mon.setDate(today.getDate()-((today.getDay()+6)%7));
+    const days=names.map((name,i)=>{const date=new Date(mon);date.setDate(mon.getDate()+i);return{name,date,key:iso(date)}});
+    if(!days.some(day=>day.key===selectedWeekDate))selectedWeekDate=iso(today);
+    $('weekGrid').innerHTML=days.map(({name,date,key})=>{
+      const dayTasks=tasks.filter(task=>task.due===key),pending=dayTasks.filter(task=>!task.done).length;
+      const label=`${date.toLocaleDateString('zh-TW',{weekday:'long'})}，${date.getMonth()+1}月${date.getDate()}日${pending?`，${pending}項待辦`:''}`;
+      return `<div class="week-date-wrap"><div class="week-day">${name}</div><button type="button" class="week-date-button ${key===selectedWeekDate?'selected':''}" data-week-date="${key}" aria-label="${label}" aria-pressed="${key===selectedWeekDate}"><span class="week-date ${key===iso(today)?'today':''}">${date.getDate()}</span><span class="week-dots" aria-hidden="true">${Array.from({length:Math.min(pending,3)},()=>'<i></i>').join('')}</span></button></div>`;
+    }).join('');
+    document.querySelectorAll('.week-date-button').forEach(button=>button.addEventListener('click',()=>{selectedWeekDate=button.dataset.weekDate;renderWeek()}));
+    renderSelectedWeekTasks();
+  }
+  function renderSelectedWeekTasks(){
+    const date=dateObj(selectedWeekDate),dayTasks=tasks.filter(task=>task.due===selectedWeekDate),label=selectedWeekDate===iso(today)?'今天':date.toLocaleDateString('zh-TW',{weekday:'long'});
+    const rows=dayTasks.length?dayTasks.map(task=>`<div class="week-task-row ${task.done?'completed':''}"><span class="week-task-mark" aria-hidden="true">${task.done?'✓':'•'}</span><span class="week-task-name">${escapeHtml(task.title||'未命名任務')}</span>${task.done?'<span class="week-task-status">已完成</span>':''}</div>`).join(''):'<div class="week-task-empty">這天沒有排定任務</div>';
+    $('weekTaskList').innerHTML=`<div class="week-task-heading"><strong>${label} · ${fmtDate(selectedWeekDate)}</strong><span>${dayTasks.length} 項</span></div>${rows}`;
+  }
   function bindTaskEvents(){document.querySelectorAll('.task').forEach(el=>{
     const id=el.dataset.id;el.querySelector('.check').addEventListener('change',e=>{const t=tasks.find(x=>x.id===id);t.done=e.target.checked;t.doneAt=t.done?Date.now():null;save();toast(t.done?'任務已完成，做得好！':'已恢復為待辦')});
     el.querySelector('.task-name').addEventListener('click',()=>openModal(id));el.querySelector('[data-edit]').addEventListener('click',()=>openModal(id));el.querySelector('[data-delete]').addEventListener('click',()=>{if(confirm('確定要刪除這項任務嗎？')){tasks=tasks.filter(t=>t.id!==id);save();toast('任務已刪除')}});
