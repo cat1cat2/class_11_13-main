@@ -124,7 +124,7 @@ import { getAI, getGenerativeModel, GoogleAIBackend } from 'https://www.gstatic.
     if(appCheckSiteKey){
       initializeAppCheck(firebaseApp,{provider:new ReCaptchaEnterpriseProvider(appCheckSiteKey),isTokenAutoRefreshEnabled:true});
       const ai=getAI(firebaseApp,{backend:new GoogleAIBackend(),useLimitedUseAppCheckTokens:true});
-      aiModel=getGenerativeModel(ai,{model:'gemini-3.8-flash',generationConfig:{temperature:.25,maxOutputTokens:900}});
+      aiModel=getGenerativeModel(ai,{model:'gemini-3.8-flash',generationConfig:{maxOutputTokens:900}});
     }
     auth=getAuth(firebaseApp);db=getFirestore(firebaseApp);
   }

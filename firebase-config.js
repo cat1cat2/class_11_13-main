@@ -12,7 +12,7 @@ export const firebaseConfig = {
 
 // Fill this with the reCAPTCHA Enterprise site key for the registered Web App after
 // enabling Firebase App Check. AI requests stay disabled until it is set.
-export const appCheckSiteKey = '';
+export const appCheckSiteKey = '6LcmeTEuAAAAAImMWtdHkV5BprTHLMedbK8UNwSq';
 
 export const firebaseConfigured = !Object.values(firebaseConfig).some(value =>
   String(value).startsWith("PASTE_") || String(value).includes("YOUR_PROJECT_ID")
