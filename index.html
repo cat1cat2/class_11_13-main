@@ -176,12 +176,24 @@ import { getAI, getGenerativeModel, GoogleAIBackend } from 'https://www.gstatic.
   async function removeEvent(id){if(!currentUser||!confirm('確定要刪除這項行程嗎？'))return;try{await deleteDoc(doc(db,'events',id));toast('行程已刪除')}catch(error){console.error(error);toast('刪除失敗，請稍後再試')}}
   function addAIMessage(role,text,pending=false){const node=document.createElement('div');node.className=`ai-message ${role}${pending?' pending':''}`;node.textContent=text;$('aiMessages').append(node);$('aiMessages').scrollTop=$('aiMessages').scrollHeight;return node}
   const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+  function isDailyAIQuotaError(error){
+    const details=`${error?.code||''} ${error?.message||error}`.toLowerCase();
+    return /generate_content_free_tier_requests|per day limit exceeded|daily quota|quota exceeded/.test(details);
+  }
   function isRetryableAIError(error){
     const details=`${error?.code||''} ${error?.message||error}`.toLowerCase();
+    if(isDailyAIQuotaError(error))return false;
     return /high demand|overload|temporarily unavailable|resource_exhausted|\b(429|500|502|503|504)\b|failed to fetch|network error/.test(details);
   }
   function aiErrorMessage(error){
     const details=`${error?.code||''} ${error?.message||error}`.toLowerCase();
+    if(isDailyAIQuotaError(error)){
+      const retryMatch=details.match(/please retry in\s+(?:(\d+)h)?(?:(\d+)m)?(\d+(?:\.\d+)?)s/i);
+      const limitMatch=details.match(/limit:\s*(\d+)/i);
+      const retryHint=retryMatch?`Google 回報約 ${retryMatch[1]?`${retryMatch[1]} 小時 `:''}${retryMatch[2]?`${retryMatch[2]} 分 `:''}${Math.ceil(Number(retryMatch[3]))} 秒後可再試。`:'請等免費額度重置後再試。';
+      const limitHint=limitMatch?`目前已達每個 Firebase 專案每日 ${limitMatch[1]} 次的免費上限。`:'目前已達 Gemini 每日免費額度上限。';
+      return `Gemini 免費額度已用完。${limitHint}${retryHint}`;
+    }
     if(/high demand|overload|temporarily unavailable/.test(details))return 'Gemini 目前較忙，已自動重試仍未成功。請稍後再試。';
     if(/resource_exhausted|\b429\b|quota|rate limit/.test(details))return 'AI 使用額度或頻率已達限制，請稍後再試。';
     if(/app.?check|permission_denied|\b403\b/.test(details))return 'Firebase 拒絕了這次 AI 請求，請確認 App Check 網域與 Firebase AI Logic 設定。';
